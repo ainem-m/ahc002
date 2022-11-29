@@ -72,4 +72,4 @@ pub fn compute_score_detail(input: &Input, out: &Output) -> (i32, String, Vec<us
 > [えびちゃん先生とのやりとり](https://twitter.com/rsk0315_h4x/status/1588542877269098497)も是非ご覧ください
 
 
-
+##
