@@ -473,13 +473,14 @@ fn main() {
     let mut state = State::new(&input, !0, input.s);
     state.evaluateScore();
     let mut loop_cnt = 0;
-
+    // 好きな実装を選択しよう！
+    // ハイパーパラメータ(ビーム幅など)は適当です。
+    //while let Some(action) = greedyAction(&input, &state) {
+    //while let Some(action) = beamSearchAction(&input, &state, 3, 3) {
+    //while let Some(action) = beamSearchActionWithTimeThreshold(&input, &state, 3, 0.02) {
+    //while let Some(action) = chokudaiSearchActionWithTimeThreshold(&input, &state, 3, 3, 0.02) {
+    //while let Some(action) = chokudaiSearchAction(&input, &state, 10, 10, 50) {
     while let Some(action) = randomAction(&mut rng, &input, &state) {
-        //while let Some(action) = greedyAction(&input, &state) {
-        //while let Some(action) = beamSearchAction(&input, &state, 3, 3) {
-        //while let Some(action) = beamSearchActionWithTimeThreshold(&input, &state, 3, 0.02) {
-        //while let Some(action) = chokudaiSearchActionWithTimeThreshold(&input, &state, 3, 3, 0.02) {
-        //while let Some(action) = chokudaiSearchAction(&input, &state, 10, 10, 50) {
         loop_cnt += 1;
         if timekeeper.isTimeOver() {
             break;
