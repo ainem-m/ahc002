@@ -7,11 +7,11 @@ import sys
 ### 型の定義
 # あれ、どっちがiでどっちがjだっけ？にならないようにnamedtupleを使う
 # 添字でもフィールド名でも呼び出せて便利！
-# coor = Coordinate(1, 2)
-# print(coor[0]) # 1
-# print(coor.i_) # 1
-# i, j = coor
-# print(i, j) # 1 2
+# >>> coor = Coordinate(1, 2)
+# >>> print(coor[0]) # 1
+# >>> print(coor.i_) # 1
+# >>> i, j = coor
+# >>> print(i, j) # 1 2
 Coordinate = namedtuple("Coordinate", "i_ j_")
 
 ### 定数
@@ -354,6 +354,8 @@ if __name__ == "__main__":
     state.evaluateScore()
     loop_cnt = 0
     while True:
+        # 好きな実装を選択しよう！
+        # ハイパーパラメータ(ビーム幅など)は適当です。
         action = randomAction(state)
         #action = greedyAction(state)
         #action = beamSearchAction(state, 3, 3)
@@ -362,6 +364,8 @@ if __name__ == "__main__":
         #action = chokudaiSearchActionWithTimeThreshold(state, 10, 10, 0.02)
         loop_cnt += 1
         if action == INF or timekeeper.isTimeOver():
+            # 手詰まりになったか時間切れの場合
+            # 手詰まりになった後の行動は工夫の余地あり
             break
         state.advance(action)
         state.evaluateScore()
