@@ -93,7 +93,7 @@ struct TileState {
 }
 
 impl TileState {
-    pub fn new(input: &Input, END_TURN: usize, pos: (usize, usize)) -> Self {
+    pub fn new(input: &Input, end_turn: usize, pos: (usize, usize)) -> Self {
         let M_ = input
             .tiles
             .iter()
@@ -111,7 +111,7 @@ impl TileState {
         let game_score_ = input.ps[pos_.i_][pos_.j_];
         let evaluated_score_ = game_score_;
         Self {
-            END_TURN_: END_TURN,
+            END_TURN_: end_turn,
             turn_: 0,
             seen_,
             pos_,
