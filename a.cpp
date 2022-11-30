@@ -89,7 +89,8 @@ public:
     Action first_action_;
     TileState() {}
 
-    // h*wの迷路を生成する。
+    // TODO
+    // コンストラクタ全然わからないのでrustのnewを載せてます
     TileState(const int end_turn, const int si, const int sj) : END_TURN_(end_turn),
                                                                 turn_(0),
                                                                 seen_(false, std::vector<bool>(M)),
@@ -98,125 +99,174 @@ public:
                                                                 steps_(steps_),
                                                                 game_score_(0),
                                                                 evaluated_score_(0),
-                                                                first_action_(-1)
+                                                                first_action_(-1){
+                                                                    /*
+                                                                        pub fn new(input: &Input, end_turn: usize, pos: (usize, usize)) -> Self {
+                                                                        let M_ = input
+                                                                            .tiles
+                                                                            .iter()
+                                                                            .map(|t| t.iter().max().unwrap())
+                                                                            .max()
+                                                                            .unwrap()
+                                                                            + 1;
+                                                                        let mut seen_ = vec![false; M_];
+                                                                        let pos_ = Position {
+                                                                            i_: pos.0,
+                                                                            j_: pos.1,
+                                                                        };
+                                                                        seen_[input.tiles[pos_.i_][pos_.j_]] = true;
+                                                                        let steps_ = vec![(pos_.i_, pos_.j_)];
+                                                                        let game_score_ = input.ps[pos_.i_][pos_.j_];
+                                                                        let evaluated_score_ = game_score_;
+                                                                        Self {
+                                                                            END_TURN_: end_turn,
+                                                                            turn_: 0,
+                                                                            seen_,
+                                                                            pos_,
+                                                                            steps_,
+                                                                            output_: String::new(),
+                                                                            game_score_,
+                                                                            evaluated_score_,
+                                                                            first_action_: !0,
+                                                                        }
+                                                                    }
+                                                                  } */
+
+                                                                    // [どのゲームでも実装する] : 探索用の盤面評価をする
+                                                                    void
+                                                                        evaluateScore(){
+                                                                            this->evaluated_score_ = this->game_score_; // 探索ではゲーム本来のスコアに別の評価値をプラスするといい探索ができるので、ここに工夫の余地がある。
+}
+
+// [どのゲームでも実装する] : ゲームの終了判定
+bool
+isDone() const
+{
+    return this->turn_ == END_TURN_;
+}
+
+// [どのゲームでも実装する] : 指定したactionでゲームを1ターン進める
+// TODO
+void advance(const Action &action)
+{
+    this->pos_.i_ += DIJ[action][0];
+    this->pos_.j_ += DIJ[action][1];
+    /*
+    self.steps_.push((self.pos_.i_, self.pos_.j_));
+    self.game_score_ += input.ps[self.pos_.i_][self.pos_.j_];
+    self.seen_[input.tiles[self.pos_.i_][self.pos_.j_]] = true;
+    self.turn_ += 1;
+    self.output_.push(DIR[action]);*/
+    auto &point = this->points_[this->pos_.i_][this->pos_.j_];
+    if (point > 0)
     {
+        this->game_score_ += point;
+        point = 0;
+    }
+    this->turn_++;
+}
 
-        auto check = std::vector<std::vector<int>>(h, std::vector<int>(w));
-        check[pos_.i_][pos_.j_] = 1;
+// [どのゲームでも実装する] : 現在の状況でプレイヤーが可能な行動を全て取得する
+// TODO tilesはどこから受け取りますか？
+// pythonだとスコープがガバガバなのでif __name__ == "__main__":内の変数を受け取れる
+// rustだと無理なのでInput構造体から受け取っています
+Actions legalActions() const
+{
+    Actions actions;
+    for (Action action = 0; action < 4; action++)
+    {
+        int ty = this->pos_.i_ + DIJ[action][0];
+        int tx = this->pos_.j_ + DIJ[action][1];
+        if (ty >= 0 && ty < h_ && tx >= 0 && tx < w_ && !this->seen_[input.tiles[ty][tx]])
+        {
+            actions.emplace_back(action);
+        }
+    }
+    return actions;
+}
 
-        for (int y = 1; y < h; y += 2)
-            for (int x = 1; x < w; x += 2)
+// [実装しなくてもよいが実装すると便利] : 現在のゲーム状況を文字列にする
+// TODO これ実装の仕方全く検討もつかなくて途方にくれています…
+std::string toString() const
+{
+    std::stringstream ss;
+    ss << "turn:\t" << this->turn_ << "\n";
+    ss << "score:\t" << this->game_score_ << "\n";
+    /*
+        let mut path = vec ![vec !["  "; TILE_SIZE]; TILE_SIZE];
+        // 移動経路に罫線を引く
+        let(i, j) = input.s;
+        path[i][j] = "@@";
+        for
+            i in 1..self.turn_
             {
-                int ty = y;
-                int tx = x;
-                if (!check[ty][tx])
+                let(h, w) = self.steps_[i];
+                let mut dir = String::new ();
+                dir.push(self.output_.chars().nth(i - 1).unwrap());
+                dir.push(self.output_.chars().nth(i).unwrap());
+                // 直前の移動方向 + 今回の移動方向によって引く罫線を決定
+                path[h][w] = match dir.as_str()
                 {
-                    this->walls_[ty][tx] = 1;
-                    check[ty][tx] = 1;
+                    "LL" = > "━━",
+                    "LU" = > "┗━",
+                    "LD" = > "┏━",
+                    "RR" = > "━━",
+                    "RU" = > "┛ ",
+                    "RD" = > "┓ ",
+                    "UL" = > "┓ ",
+                    "UR" = > "┏━",
+                    "UU" = > "┃ ",
+                    "DL" = > "┛ ",
+                    "DR" = > "┗━",
+                    "DD" = > "┃ ",
+                    _ = > unreachable !(),
                 }
-                if (mt() % 10 > 50)
+            }
+        // 出力パート
+        let isConnectHorizontal =
+            | h : usize,
+            w : usize | w + 1 < TILE_SIZE && input.tiles[h][w] == input.tiles[h][w + 1];
+        let isConnectVertical =
+            | h : usize,
+            w : usize | h + 1 < TILE_SIZE && input.tiles[h][w] == input.tiles[h + 1][w];
+        for
+            h in 0..TILE_SIZE
+            {
+            for
+                w in 0..TILE_SIZE
                 {
-                    int direction = mt() % (y == 1 ? 4 : 3);
-                    ty += DIJ[direction][0];
-                    tx += DIJ[direction][1];
-                    if (!check[ty][tx])
+                    if
+                        !isConnectVertical(h, w)
+                        {
+                            // 下のタイルとつながっていなかったら下線を引く
+                            eprint !("\x1b[4m");
+                        }
+                    if self
+                        .seen_[input.tiles[h][w]]
+                        {
+                            // 踏んだタイルなら色を塗る
+                            eprint !("\x1b[46m");
+                        }
+                    eprint !("{}", path[h][w]);
+                    if isConnectHorizontal (h, w)
                     {
-                        this->walls_[ty][tx] = 1;
-                        check[ty][tx] = 1;
+                        // 右のタイルと繋がっていたら文字修飾を引き継いで空白を出力
+                        eprint !(" ")
+                    }
+                    else
+                    {
+                        // 右のタイルと繋がっていなかったら修飾をリセットして|を出力
+                        eprint !("\x1b[0m");
+                        eprint !("|");
                     }
                 }
-            }
-        for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++)
-            {
-                if (!check[y][x])
-                {
-                    this->points_[y][x] = mt() % 10;
-                    check[y][x] = 1;
-                }
+            eprintln !();
             }
     }
-
-    // [どのゲームでも実装する] : 探索用の盤面評価をする
-    void evaluateScore()
-    {
-        this->evaluated_score_ = this->game_score_; // 探索ではゲーム本来のスコアに別の評価値をプラスするといい探索ができるので、ここに工夫の余地がある。
-    }
-
-    // [どのゲームでも実装する] : ゲームの終了判定
-    bool isDone() const
-    {
-        return this->turn_ == END_TURN_;
-    }
-
-    // [どのゲームでも実装する] : 指定したactionでゲームを1ターン進める
-    void advance(const Action &action)
-    {
-        this->pos_.i_ += DIJ[action][0];
-        this->pos_.j_ += DIJ[action][1];
-        /*self.pos_.i_ += DIJ[action] .0;
-        self.pos_.j_ += DIJ[action] .1;
-        self.steps_.push((self.pos_.i_, self.pos_.j_));
-        self.game_score_ += input.ps[self.pos_.i_][self.pos_.j_];
-        self.seen_[input.tiles[self.pos_.i_][self.pos_.j_]] = true;
-        self.turn_ += 1;
-        self.output_.push(DIR[action]);*/
-        auto &point = this->points_[this->pos_.i_][this->pos_.j_];
-        if (point > 0)
-        {
-            this->game_score_ += point;
-            point = 0;
-        }
-        this->turn_++;
-    }
-
-    // [どのゲームでも実装する] : 現在の状況でプレイヤーが可能な行動を全て取得する
-    Actions legalActions() const
-    {
-        Actions actions;
-        for (Action action = 0; action < 4; action++)
-        {
-            int ty = this->pos_.i_ + DIJ[action][0];
-            int tx = this->pos_.j_ + DIJ[action][1];
-            if (ty >= 0 && ty < h_ && tx >= 0 && tx < w_ && !this->walls_[ty][tx])
-            {
-                actions.emplace_back(action);
-            }
-        }
-        return actions;
-    }
-
-    // [実装しなくてもよいが実装すると便利] : 現在のゲーム状況を文字列にする
-    std::string toString() const
-    {
-        std::stringstream ss;
-        ss << "turn:\t" << this->turn_ << "\n";
-        ss << "score:\t" << this->game_score_ << "\n";
-        for (int h = 0; h < this->h_; h++)
-        {
-            for (int w = 0; w < this->w_; w++)
-            {
-                char c = '.';
-                if (this->walls_[h][w])
-                {
-                    c = '#';
-                }
-                if (this->pos_.i_ == h && this->pos_.j_ == w)
-                {
-                    c = '@';
-                }
-                if (this->points_[h][w])
-                {
-                    c = '0' + (char)points_[h][w];
-                }
-                ss << c;
-            }
-            ss << '\n';
-        }
-
-        return ss.str();
-    }
-};
+    */
+}
+}
+;
 
 // [どのゲームでも実装する] : 探索時のソート用に評価を比較する
 bool operator<(const TileState &maze_1, const TileState &maze_2)
@@ -443,64 +493,49 @@ Action chokudaiSearchActionWithTimeThreshold(const State &state, const int beam_
 }
 #include <iostream>
 #include <functional>
-using AIFunction = std::function<Action(const State &)>;
-using StringAIPair = std::pair<std::string, AIFunction>;
 
-// ゲームを1回プレイしてゲーム状況を表示する
-void playGame(const StringAIPair &ai, const int h, const int w, const int end_turn, const int seed)
-{
-    using std::cout;
-    using std::endl;
-
-    auto state = State(h, w, end_turn, seed);
-    state.evaluateScore();
-    std::cout << state.toString() << std::endl;
-    while (!state.isDone())
-    {
-        state.advance(ai.second(state));
-        state.evaluateScore();
-        std::cout << state.toString() << std::endl;
-    }
-}
-
-// ゲームをgame_number回プレイしてスコア平均を表示する
-void testAiScore(const StringAIPair &ai, const int game_number, const int h, const int w, const int end_turn)
-{
-    using std::cout;
-    using std::endl;
-    std::mt19937 mt_for_construct(0);
-    double score_mean = 0;
-    for (int i = 0; i < game_number; i++)
-    {
-        auto state = State(h, w, end_turn, mt_for_construct());
-
-        while (!state.isDone())
-        {
-            state.advance(ai.second(state));
-        }
-        auto score = state.game_score_;
-        score_mean += score;
-
-        cout << "i " << i << " score " << score_mean / (i + 1) << endl;
-    }
-    score_mean /= (double)game_number;
-    cout << "Score of " << ai.first << ":\t" << score_mean << endl;
-}
 int main()
 {
     using std::cout;
     using std::endl;
     auto mt = std::mt19937(SEED);
+    /*
+    input !
+    {
+    s:
+        (usize, usize),
+            tiles : [[usize; TILE_SIZE]; TILE_SIZE],
+                    ps : [[i32; TILE_SIZE]; TILE_SIZE],
+    }
+    let timekeeper = TimeKeeper::new (TIME_LIMIT);
+    let mut rng = ChaCha20Rng::seed_from_u64(SEED);
 
-    // const auto& ai = StringAIPair("randomAction", [](const State& state) {return randomAction(state); });
-    // const auto& ai = StringAIPair("beamSearchAction", [](const State& state) {return beamSearchAction(state, 2000, 50); });
-    // const auto& ai = StringAIPair("beamSearchActionWithTimeThreshold", [](const State& state) {return beamSearchActionWithTimeThreshold(state, 200, 10); });
-    // const auto& ai = StringAIPair("chokudaiSearchAction", [](const State& state) {return chokudaiSearchAction(state, 1, 50, 20); });
-    // const auto& ai = StringAIPair("chokudaiSearchActionWithTimeThreshold", [](const State& state) {return chokudaiSearchActionWithTimeThreshold(state, 1, 50, 10); });
-    const auto &ai = StringAIPair("greedyAction", [](const State &state)
-                                  { return greedyAction(state); });
-
-    playGame(ai, /*盤面の高さ*/ 5, /*盤面の幅*/ 5, /*ゲーム終了ターン*/ 3, /*盤面初期化のシード*/ 0);
-    // testAiScore(ai,/*テストする回数*/10,/*盤面の高さ*/31,/*盤面の幅*/11,/*ゲーム終了ターン*/100);
-    return 0;
+    let input = Input{s, tiles, ps};
+    let mut state = State::new (&input, !0, input.s);
+    state.evaluateScore();
+    let mut loop_cnt = 0;
+    // 好きな実装を選択しよう！
+    // ハイパーパラメータ(ビーム幅など)は適当です。
+    // while let Some(action) = greedyAction(&input, &state) {
+    // while let Some(action) = beamSearchAction(&input, &state, 3, 3) {
+    // while let Some(action) = beamSearchActionWithTimeThreshold(&input, &state, 3, 0.02) {
+    // while let Some(action) = chokudaiSearchActionWithTimeThreshold(&input, &state, 3, 3, 0.02) {
+    // while let Some(action) = chokudaiSearchAction(&input, &state, 10, 10, 50) {
+    while
+        let Some(action) = randomAction(&mut rng, &input, &state)
+        {
+            loop_cnt += 1;
+            if timekeeper
+                .isTimeOver()
+                {
+                    break;
+                }
+            state.advance(&input, action);
+            state.evaluateScore();
+        }
+    state.toString(&input);
+    println !("{}", state.output_);
+    eprintln !("{} loop", loop_cnt);
+    eprintln !("{} ms", timekeeper.time());
+    */
 }
