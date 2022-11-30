@@ -5,26 +5,35 @@ from heapq import heappop, heappush
 import random
 import sys
 
+### 型の定義
+# あれ、どっちがiでどっちがjだっけ？にならないようにnamedtupleを使う
+# 添字でもフィールド名でも呼び出せて便利！
+# coor = Coordinate(1, 2)
+# print(coor[0]) # 1
+# print(coor.i_) # 1
+# i, j = coor
+# print(i, j) # 1 2
+Coordinate = namedtuple("Coordinate", "i_ j_")
+Action = int
+Actions = List[int]
+ScoreType = int
+Output = str
+
+### 定数
+INF = 1000000000
+TILE_SIZE = 50
+DIJ = [Coordinate(0, -1), Coordinate(0, 1), Coordinate(-1, 0), Coordinate(1, 0)]
+DIR = "LRUD"
+
+### 好みで変更する
+TIME_LIMIT = 1.9
+SEED = 20210325
 
 def eprint(*args, **kwargs):
     """標準エラー出力に出力するprint
     """
     print(*args, file=sys.stderr, **kwargs)
     
-### 型の定義
-Coordinate = namedtuple("Coordinate", "i_ j_")
-Action = int
-Actions = List[int]
-ScoreType = int
-Output = str
-### 定数
-INF = 1000000000
-TILE_SIZE = 50
-DIJ = [Coordinate(0, -1), Coordinate(0, 1), Coordinate(-1, 0), Coordinate(1, 0)]
-DIR = "LRUD"
-### 時間制限
-TIME_LIMIT = 1.9
-
 
 class TimeKeeper:
     """時間を管理するクラス
@@ -38,6 +47,8 @@ class TimeKeeper:
         """
         return time() - self.start_time_ - self.time_threshold_ >= 0
     def time(self) -> int:
+        """経過時間をミリ秒単位で返す
+        """
         return int((time() - self.start_time_) * 1000)
 
 class TileState:
@@ -49,10 +60,10 @@ class TileState:
     output_: 経路の出力<br>
     steps_: 移動経路の座標<br>
     game_score_: 得点(実際の得点)<br>
-    evaluate_score_: 探索上で評価したスコア<br>
+    evaluated_score_: 探索上で評価したスコア<br>
     first_action_: 探索木のノートルードで最初に選択した行動<br>
     """
-    def __init__(self, END_TURN:int, pos:Coordinate, turn=0, seen=[], steps = [], output="", game_score=0) -> None:
+    def __init__(self, END_TURN:int, pos:Coordinate, turn=0, seen=[], steps = [], output="", game_score=0, first_action=INF) -> None:
         self.END_TURN_ = END_TURN
         self.turn_ = turn if turn else 0
         self.seen_ = seen if seen else [False]*M
@@ -61,15 +72,15 @@ class TileState:
         self.steps_:List[Coordinate] = steps if steps else [pos]
         self.output_:Output = output
         self.game_score_ = game_score if game_score else ps[pos[0]][pos[1]]
-        self.evaluate_score_ = self.game_score_
-        self.first_action_ = INF
+        self.evaluated_score_ = self.game_score_
+        self.first_action_ = first_action
         
     def evaluateScore(self) -> None:
         """
         [どのゲームでも実装する]: 探索用の盤面評価をする
         探索ではゲーム本来のスコアに別の評価値をプラスするといい探索ができるので、ここに工夫の余地がある。
         """
-        self.evaluate_score_ = self.game_score_
+        self.evaluated_score_ = self.game_score_
         
     def isDone(self) -> bool:
         """
@@ -105,6 +116,8 @@ class TileState:
         [実装しなくてもよいが実装すると便利]: 現在のゲーム状況をstrで返す
         """
         res: str = ""
+        # key: 直前の移動方向+今回の移動方向
+        # value: 罫線
         dic:Dict[str, str] = {
             "LL" : "━━",
             "LU" : "┗━",
@@ -118,42 +131,54 @@ class TileState:
             "DL" : "┛ ",
             "DR" : "┗━",
             "DD" : "┃ "}
-        path = [["  " for _ in range(TILE_SIZE)] for _ in range(TILE_SIZE)]
+        path: List[List[str]] = [["  " for _ in range(TILE_SIZE)] for _ in range(TILE_SIZE)]
         i, j = si, sj
         path[i][j] = "@@"
+        # 移動経路を読み込み、罫線を引く
         for i in range(1, self.turn_):
             h, w = self.steps_[i]
             dir = self.output_[i-1] + self.output_[i]
             path[h][w] = dic[dir]
         # 出力パート
-        is_connect_horizontal:Callable[[int, int], bool] = lambda h, w: w+1<TILE_SIZE and tiles[h][w] == tiles[h][w+1]
-        is_connect_vertical: Callable[[int, int], bool] = lambda h, w: h+1<TILE_SIZE and tiles[h][w] == tiles[h+1][w]
+        isConnectHorizontal:Callable[[int, int], bool] = lambda h, w: w+1<TILE_SIZE and tiles[h][w] == tiles[h][w+1]
+        isConnectVertical: Callable[[int, int], bool] = lambda h, w: h+1<TILE_SIZE and tiles[h][w] == tiles[h+1][w]
         for h in range(TILE_SIZE):
             for w in range(TILE_SIZE):
-                if not is_connect_vertical(h, w):
+                if not isConnectVertical(h, w):
+                    # 下のタイルと繋がっていなかったら下線を引く
                     res += "\x1b[4m"
                 if self.seen_[tiles[h][w]]:
+                    # 踏んだタイルなら色を塗る
                     res += "\x1b[46m"
                 res += path[h][w]
-                if is_connect_horizontal(h, w):
+                if isConnectHorizontal(h, w):
+                    # 右のタイルと繋がっていたら文字修飾を引き継いで空白を出力
                     res += " "
                 else:
+                    # 右のタイルと繋がっていなかったら修飾をリセットして|を出力
                     res += "\x1b[0m|"
             res += "\n"
         res += f"turn : {self.turn_}\n"
         res += f"score: {self.game_score_}\n"
+        res += f"legal_actions: {self.legalActions()}\n"
         return res
     def __lt__(self, other) -> bool:
         """
         [どのゲームでも実装する] : 探索時のソート用に評価を比較する
-        pythonではheapqがminheapなのでマイナスをつけている
+        pythonではheapqがminheapなのでevaluated_score_の値に
+        マイナスをつけている
         """
         # TODOここでotherに型ヒントつけれないのどうしたらいいのか調べる
         return -self.evaluated_score_ < -other.evaluated_score_
 
 State = TileState
+
 def clone(state:State) -> State:
-    return State(state.END_TURN_, state.pos_, state.turn_, state.seen_.copy(), state.steps_.copy(), state.output_, state.game_score_)
+    """
+    pythonではdeepcopyが信用できないので代わりのもの
+    Stateを受け取り、複製したStateを返す
+    """
+    return State(state.END_TURN_, state.pos_, state.turn_, state.seen_.copy(), state.steps_.copy(), state.output_, state.game_score_, state.first_action_)
 
 def randomAction(state:State) -> Action:
     """
@@ -182,10 +207,9 @@ def greedyAction(state:State) -> Action:
 
 def beamSearchAction(state:State, beam_width:int, beam_depth:int) -> Action:
     """
-    ビーム1本あたりのビーム幅とビームの本数を指定してchokudaiサーチで行動を決定する
+    ビーム幅と深さを指定してビームサーチで行動を決定する
     """
     PriorityQueue = List # pythonにオブジェクトとしてのheapqは存在しないので…
-    legal_actions = state.legalActions()
     now_beam:PriorityQueue[State] = []
     best_state:State
     
@@ -196,6 +220,9 @@ def beamSearchAction(state:State, beam_width:int, beam_depth:int) -> Action:
             if not now_beam: break
             now_state = heappop(now_beam)
             legal_actions = now_state.legalActions()
+            if not legal_actions:
+                heappush(next_beam, now_state)
+                break
             for action in legal_actions:
                 next_state = clone(now_state)
                 next_state.advance(action)
@@ -244,6 +271,8 @@ def beamSearchActionWithTimeThreshold(state:State, beam_width:int, time_threshol
     return best_state.first_action_
 
 def chokudaiSearchAction(state:State, beam_width:int, beam_depth:int, beam_number:int) -> Action:
+    """ビーム1本あたりのビーム幅とビームの本数を指定してchokudaiサーチで行動を決定する
+    """
     PriorityQueue = List
     beam:List[PriorityQueue[State]] = [[] for _ in range(beam_depth + 1)]
     heappush(beam[0], state)
@@ -259,18 +288,24 @@ def chokudaiSearchAction(state:State, beam_width:int, beam_depth:int, beam_numbe
                     break
                 heappop(now_beam)
                 legal_actions = now_state.legalActions()
+                if not legal_actions:
+                    heappush(now_beam, now_state)
+                    break
                 for action in legal_actions:
                     next_state = clone(now_state)
                     next_state.advance(action)
                     next_state.evaluateScore()
                     if t==0: next_state.first_action_ = action
                     heappush(next_beam, next_state)
-    for t in range(beam_depth)[::-1]: # 逆順に
+    for t in range(beam_depth+1)[::-1]: # 逆順に
         now_beam = beam[t]
         if now_beam:
             return now_beam[0].first_action_
+    return INF
     
 def chokudaiSearchActionWithTimeThreshold(state:State, beam_width:int, beam_depth:int, time_threshold:float) -> Action:
+    """ビーム1本あたりのビーム幅と制限時間(s)を指定してchokudaiサーチで行動を決定する
+    """
     time_keeper = TimeKeeper(time_threshold)
     PriorityQueue = List
     beam:List[PriorityQueue[State]] = [[] for _ in range(beam_depth + 1)]
@@ -294,27 +329,34 @@ def chokudaiSearchActionWithTimeThreshold(state:State, beam_width:int, beam_dept
                     if t==0: next_state.first_action_ = action
                     heappush(next_beam, next_state)
         if time_keeper.isTimeOver():break
-    for t in range(beam_depth)[::-1]: # 逆順に
+    for t in range(beam_depth+1)[::-1]: # 逆順に
         now_beam = beam[t]
         if now_beam:
             return now_beam[0].first_action_
+    return INF
 
 
 if __name__ == "__main__":
+    random.seed(20210325)
     si, sj = map(int, input().split())
-    tiles:List[List[int]] = [[int(i) for i in range(TILE_SIZE)] for _ in range(TILE_SIZE)]
-    ps:List[List[int]] = [[int(i) for i in range(TILE_SIZE)] for _ in range(TILE_SIZE)]
+    tiles:List[List[int]] = [[int(i) for i in input().split()] for _ in range(TILE_SIZE)]
+    ps:List[List[int]] = [[int(i) for i in input().split()] for _ in range(TILE_SIZE)]
     M:int = 0 # タイルの枚数
     for i in range(TILE_SIZE):
         for j in range(TILE_SIZE):
             M = max(M, tiles[i][j])
     M += 1
     timekeeper = TimeKeeper(TIME_LIMIT)
-    state = State(3000, Coordinate(si, sj))
+    state = State(INF, Coordinate(si, sj))
     state.evaluateScore()
     loop_cnt = 0
     while True:
         action = randomAction(state)
+        #action = greedyAction(state)
+        #action = beamSearchAction(state, 3, 3)
+        #action = beamSearchActionWithTimeThreshold(state, 10, 0.01)
+        #action = chokudaiSearchAction(state, 10, 10, 50)
+        #action = chokudaiSearchActionWithTimeThreshold(state, 10, 10, 0.02)
         loop_cnt += 1
         if action == INF or timekeeper.isTimeOver():
             break

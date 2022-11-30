@@ -1,16 +1,24 @@
+#![allow(non_snake_case)]
+
 use proconio::input;
 use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
 
+// 型の定義
 type Action = usize;
 type Actions = Vec<usize>;
 type ScoreType = i32;
 pub type Output = String;
+
+// 定数
 const INF: ScoreType = 1000000000;
 const TILE_SIZE: usize = 50;
 const DIJ: [(usize, usize); 4] = [(0, !0), (0, 1), (!0, 0), (1, 0)];
 const DIR: [char; 4] = ['L', 'R', 'U', 'D'];
+
+// 好みで変更する
 const TIME_LIMIT: f64 = 1.9;
+const SEED: u64 = 20210325;
 
 /// 時間を管理するクラス
 struct TimeKeeper {
@@ -26,9 +34,10 @@ impl TimeKeeper {
         }
     }
     /// インスタンス生成した時から指定した時間制限を超過したか判断する。
-    pub fn is_time_over(&self) -> bool {
+    pub fn isTimeOver(&self) -> bool {
         Self::get_time() - self.start_time_ - self.time_threshold_ >= 0.
     }
+    /// 経過時間をミリ秒単位で返す
     pub fn time(&self) -> usize {
         ((Self::get_time() - self.start_time_) * 1000.) as usize
     }
@@ -62,7 +71,6 @@ struct Position {
 // を参考にしています。thunderさんに多大なる感謝を…
 
 #[derive(Clone)]
-#[allow(non_snake_case)]
 /// END_TURN_: 探索を終了するターン<br>
 /// turn_: 現在のターン<br>
 /// seen_: タイルを踏んだかどうか<br>
@@ -70,7 +78,7 @@ struct Position {
 /// output_: 経路の出力<br>
 /// steps_: 移動経路の座標<br>
 /// game_score_: 得点(実際の得点)<br>
-/// evaluate_score_: 探索上で評価したスコア<br>
+/// evaluated_score_: 探索上で評価したスコア<br>
 /// first_action_: 探索木のノートルードで最初に選択した行動<br>
 struct TileState {
     END_TURN_: usize,
@@ -80,11 +88,10 @@ struct TileState {
     pub output_: Output,
     pub steps_: Vec<(usize, usize)>,
     pub game_score_: i32,
-    pub evaluate_score_: ScoreType,
+    pub evaluated_score_: ScoreType,
     pub first_action_: Action,
 }
 
-#[allow(non_snake_case)]
 impl TileState {
     pub fn new(input: &Input, END_TURN: usize, pos: (usize, usize)) -> Self {
         let M_ = input
@@ -102,7 +109,7 @@ impl TileState {
         seen_[input.tiles[pos_.i_][pos_.j_]] = true;
         let steps_ = vec![(pos_.i_, pos_.j_)];
         let game_score_ = input.ps[pos_.i_][pos_.j_];
-        let evaluate_score_ = game_score_;
+        let evaluated_score_ = game_score_;
         Self {
             END_TURN_: END_TURN,
             turn_: 0,
@@ -111,18 +118,18 @@ impl TileState {
             steps_,
             output_: String::new(),
             game_score_,
-            evaluate_score_,
+            evaluated_score_,
             first_action_: !0,
         }
     }
     /// [どのゲームでも実装する]: 探索用の盤面評価をする
     /// 探索ではゲーム本来のスコアに別の評価値をプラスするといい探索ができるので、ここに工夫の余地がある。
-    pub fn evaluate_score(&mut self) {
-        self.evaluate_score_ = self.game_score_;
+    pub fn evaluateScore(&mut self) {
+        self.evaluated_score_ = self.game_score_;
     }
 
     /// [どのゲームでも実装する]: ゲームの終了判定
-    pub fn is_done(&self) -> bool {
+    pub fn isDone(&self) -> bool {
         self.turn_ == self.END_TURN_
     }
 
@@ -138,7 +145,7 @@ impl TileState {
     }
 
     /// [どのゲームでも実装する]: 現在の状況でプレイヤーが可能な行動を全て取得する
-    pub fn legal_actions(&self, input: &Input) -> Actions {
+    pub fn legalActions(&self, input: &Input) -> Actions {
         let mut actions: Actions = vec![];
         for action in 0..4 {
             let ni = self.pos_.i_ + DIJ[action].0;
@@ -151,7 +158,7 @@ impl TileState {
     }
 
     /// [実装しなくてもよいが実装すると便利]: 現在のゲーム状況を標準エラー出力に出力する
-    pub fn to_string(&self, input: &Input) {
+    pub fn toString(&self, input: &Input) {
         let mut path = vec![vec!["  "; TILE_SIZE]; TILE_SIZE];
         // 移動経路に罫線を引く
         let (i, j) = input.s;
@@ -161,6 +168,7 @@ impl TileState {
             let mut dir = String::new();
             dir.push(self.output_.chars().nth(i - 1).unwrap());
             dir.push(self.output_.chars().nth(i).unwrap());
+            // 直前の移動方向 + 今回の移動方向によって引く罫線を決定
             path[h][w] = match dir.as_str() {
                 "LL" => "━━",
                 "LU" => "┗━",
@@ -178,13 +186,13 @@ impl TileState {
             }
         }
         // 出力パート
-        let is_connect_horizontal =
+        let isConnectHorizontal =
             |h: usize, w: usize| w + 1 < TILE_SIZE && input.tiles[h][w] == input.tiles[h][w + 1];
-        let is_connect_vertical =
+        let isConnectVertical =
             |h: usize, w: usize| h + 1 < TILE_SIZE && input.tiles[h][w] == input.tiles[h + 1][w];
         for h in 0..TILE_SIZE {
             for w in 0..TILE_SIZE {
-                if !is_connect_vertical(h, w) {
+                if !isConnectVertical(h, w) {
                     // 下のタイルとつながっていなかったら下線を引く
                     eprint!("\x1b[4m");
                 }
@@ -193,7 +201,7 @@ impl TileState {
                     eprint!("\x1b[46m");
                 }
                 eprint!("{}", path[h][w]);
-                if is_connect_horizontal(h, w) {
+                if isConnectHorizontal(h, w) {
                     // 右のタイルと繋がっていたら文字修飾を引き継いで空白を出力
                     eprint!(" ")
                 } else {
@@ -212,55 +220,55 @@ impl TileState {
 /// [どのゲームでも実装する] : 探索時のソート用に評価を比較する
 impl Ord for TileState {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.evaluate_score_.cmp(&other.evaluate_score_)
+        self.evaluated_score_.cmp(&other.evaluated_score_)
     }
 }
 impl PartialEq for TileState {
     fn eq(&self, other: &Self) -> bool {
-        self.evaluate_score_ == other.evaluate_score_
+        self.evaluated_score_ == other.evaluated_score_
     }
 }
 impl Eq for TileState {} // ここは空でOK
 impl PartialOrd for TileState {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.evaluate_score_.partial_cmp(&other.evaluate_score_)
+        self.evaluated_score_.partial_cmp(&other.evaluated_score_)
     }
 }
 
 type State = TileState;
 
-#[allow(dead_code, non_snake_case)]
+#[allow(dead_code)]
 /// ランダムに行動を決定する
 fn randomAction(rng: &mut ChaCha20Rng, input: &Input, state: &State) -> Option<Action> {
-    let legal_actions = state.legal_actions(input);
-    if legal_actions.is_empty() {
+    let legalActions = state.legalActions(input);
+    if legalActions.is_empty() {
         return None;
     }
-    return Some(legal_actions[rng.gen_range(0, 100) as usize % (legal_actions.len())]);
+    return Some(legalActions[rng.gen_range(0, 100) as usize % (legalActions.len())]);
 }
 
-#[allow(dead_code, non_snake_case)]
+#[allow(dead_code)]
 /// 貪欲法で行動を決定する
 fn greedyAction(input: &Input, state: &State) -> Option<Action> {
     let mut best_score: ScoreType = -INF;
     let mut best_action = !0;
-    let legal_actions = state.legal_actions(input);
-    if legal_actions.is_empty() {
+    let legalActions = state.legalActions(input);
+    if legalActions.is_empty() {
         return None;
     }
-    for action in legal_actions {
+    for action in legalActions {
         let mut now_state = state.clone();
         now_state.advance(input, action);
-        now_state.evaluate_score();
-        if now_state.evaluate_score_ > best_score {
-            best_score = now_state.evaluate_score_;
+        now_state.evaluateScore();
+        if now_state.evaluated_score_ > best_score {
+            best_score = now_state.evaluated_score_;
             best_action = action;
         }
     }
     return Some(best_action);
 }
 
-#[allow(dead_code, non_snake_case)]
+#[allow(dead_code)]
 /// ビーム幅と深さを指定してビームサーチで行動を決定する
 fn beamSearchAction(
     input: &Input,
@@ -279,11 +287,11 @@ fn beamSearchAction(
                 break;
             }
             let now_state = now_beam.pop().unwrap();
-            let legal_actions = now_state.legal_actions(input);
-            for action in legal_actions {
+            let legalActions = now_state.legalActions(input);
+            for action in legalActions {
                 let mut next_state = now_state.clone();
                 next_state.advance(input, action);
-                next_state.evaluate_score();
+                next_state.evaluateScore();
                 if t == 0 {
                     next_state.first_action_ = action;
                 }
@@ -294,7 +302,7 @@ fn beamSearchAction(
         now_beam = next_beam;
         best_state = now_beam.peek().unwrap();
 
-        if best_state.is_done() {
+        if best_state.isDone() {
             break;
         }
     }
@@ -306,7 +314,7 @@ fn beamSearchAction(
     return Some(best_state.first_action_);
 }
 
-#[allow(dead_code, non_snake_case)]
+#[allow(dead_code)]
 /// ビーム幅と制限時間(s)を指定してビームサーチで行動を決定する
 fn beamSearchActionWithTimeThreshold(
     input: &Input,
@@ -323,18 +331,18 @@ fn beamSearchActionWithTimeThreshold(
     for t in 0.. {
         let mut next_beam = BinaryHeap::new();
         for _ in 0..beam_width {
-            if timekeeper.is_time_over() {
+            if timekeeper.isTimeOver() {
                 return Some(best_state.first_action_);
             }
             if now_beam.is_empty() {
                 break;
             }
             let now_state = now_beam.pop().unwrap();
-            let legal_actions = now_state.legal_actions(input);
-            for action in legal_actions {
+            let legalActions = now_state.legalActions(input);
+            for action in legalActions {
                 let mut next_state = now_state.clone();
                 next_state.advance(input, action);
-                next_state.evaluate_score();
+                next_state.evaluateScore();
                 if t == 0 {
                     next_state.first_action_ = action
                 }
@@ -348,7 +356,7 @@ fn beamSearchActionWithTimeThreshold(
         }
         best_state = now_beam.peek().unwrap().clone();
 
-        if best_state.is_done() {
+        if best_state.isDone() {
             break;
         }
     }
@@ -360,7 +368,7 @@ fn beamSearchActionWithTimeThreshold(
     Some(ans_action)
 }
 
-#[allow(dead_code, non_snake_case)]
+#[allow(dead_code)]
 /// ビーム1本あたりのビーム幅とビームの本数を指定してchokudaiサーチで行動を決定する
 fn chokudaiSearchAction(
     input: &Input,
@@ -373,18 +381,22 @@ fn chokudaiSearchAction(
     let mut beam = vec![BinaryHeap::new(); beam_depth + 1];
     beam[0].push(state.clone());
     for _ in 0..beam_number {
+        // thunderさんのコードだとここで
+        // now_beam = &beam[t]
+        // next_beam = &beam[t+1]
+        // としていて、その方が見やすいのだが、Rustでは二重借用ができない
         for t in 0..beam_depth {
             for _ in 0..beam_width {
                 if let Some(now_state) = beam[t].pop() {
-                    if now_state.is_done() {
+                    if now_state.isDone() {
                         beam[t].push(now_state);
                         break;
                     }
-                    let legal_actions = now_state.legal_actions(input);
-                    for action in legal_actions {
+                    let legalActions = now_state.legalActions(input);
+                    for action in legalActions {
                         let mut next_state = now_state.clone();
                         next_state.advance(input, action);
-                        next_state.evaluate_score();
+                        next_state.evaluateScore();
                         if t == 0 {
                             next_state.first_action_ = action
                         }
@@ -420,15 +432,15 @@ fn chokudaiSearchActionWithTimeThreshold(
         for t in 0..beam_depth {
             for _ in 0..beam_width {
                 if let Some(now_state) = beam[t].pop() {
-                    if now_state.is_done() {
+                    if now_state.isDone() {
                         beam[t].push(now_state);
                         break;
                     }
-                    let legal_actions = now_state.legal_actions(input);
-                    for action in legal_actions {
+                    let legalActions = now_state.legalActions(input);
+                    for action in legalActions {
                         let mut next_state = now_state.clone();
                         next_state.advance(input, action);
-                        next_state.evaluate_score();
+                        next_state.evaluateScore();
                         if t == 0 {
                             next_state.first_action_ = action
                         }
@@ -437,7 +449,7 @@ fn chokudaiSearchActionWithTimeThreshold(
                 }
             }
         }
-        if timekeeper.is_time_over() {
+        if timekeeper.isTimeOver() {
             break;
         }
     }
@@ -455,22 +467,27 @@ fn main() {
         ps: [[i32; TILE_SIZE]; TILE_SIZE],
     }
     let timekeeper = TimeKeeper::new(TIME_LIMIT);
-    //let mut rng = ChaCha20Rng::seed_from_u64(20210325);
+    let mut rng = ChaCha20Rng::seed_from_u64(SEED);
 
     let input = Input { s, tiles, ps };
     let mut state = State::new(&input, !0, input.s);
-    state.evaluate_score();
+    state.evaluateScore();
     let mut loop_cnt = 0;
-    while let Some(action) = beamSearchActionWithTimeThreshold(&input, &state, 10, 0.05) {
+
+    while let Some(action) = randomAction(&mut rng, &input, &state) {
         //while let Some(action) = greedyAction(&input, &state) {
+        //while let Some(action) = beamSearchAction(&input, &state, 3, 3) {
+        //while let Some(action) = beamSearchActionWithTimeThreshold(&input, &state, 3, 0.02) {
+        //while let Some(action) = chokudaiSearchActionWithTimeThreshold(&input, &state, 3, 3, 0.02) {
+        //while let Some(action) = chokudaiSearchAction(&input, &state, 10, 10, 50) {
         loop_cnt += 1;
-        if timekeeper.is_time_over() {
+        if timekeeper.isTimeOver() {
             break;
         }
         state.advance(&input, action);
-        state.evaluate_score();
+        state.evaluateScore();
     }
-    state.to_string(&input);
+    state.toString(&input);
     println!("{}", state.output_);
     eprintln!("{} loop", loop_cnt);
     eprintln!("{} ms", timekeeper.time());
