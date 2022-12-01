@@ -129,7 +129,8 @@ public:
     {
         this->pos_.i_ += DIJ[action][0];
         this->pos_.j_ += DIJ[action][1];
-        this->steps_.push_back(Position(this->pos_.i_, this->pos_.j_));
+        this->steps_.emplace_back(Position(this->pos_.i_, this->pos_.j_)); // thunder'sヒィィィント！！ここはもっと簡潔かつ実行速度も高速化できる実装があるよ！
+        // advanceは探索中何度も呼ばれるからけっこう改善の効果がでかいかも？
         this->game_score_ += input.ps[this->pos_.i_][this->pos_.j_];
         this->seen_[input.tiles[this->pos_.i_][this->pos_.j_]] = true;
         this->turn_++;
