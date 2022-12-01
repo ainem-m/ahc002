@@ -19,6 +19,7 @@ const DIR: [char; 4] = ['L', 'R', 'U', 'D'];
 // 好みで変更する
 const TIME_LIMIT: f64 = 1.9;
 const SEED: u64 = 20210325;
+const VIEW_POINTS: bool = false; // デバッグの時得点を表示するかどうか
 
 /// 時間を管理するクラス
 struct TimeKeeper {
@@ -160,6 +161,18 @@ impl TileState {
     /// [実装しなくてもよいが実装すると便利]: 現在のゲーム状況を標準エラー出力に出力する
     pub fn toString(&self, input: &Input) {
         let mut path = vec![vec!["  "; TILE_SIZE]; TILE_SIZE];
+        let string: Vec<Vec<String>> = input
+            .ps
+            .iter()
+            .map(|pvec| pvec.iter().map(|p| format!("{:02}", p)).collect())
+            .collect();
+        if VIEW_POINTS {
+            for i in 0..TILE_SIZE {
+                for j in 0..TILE_SIZE {
+                    path[i][j] = string[i][j].as_str();
+                }
+            }
+        }
         // 移動経路に罫線を引く
         let (i, j) = input.s;
         path[i][j] = "@@";
