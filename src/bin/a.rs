@@ -1,5 +1,10 @@
 #![allow(non_snake_case)]
 
+// [世界四連覇AIエンジニアがゼロから教えるゲーム木探索入門]
+// (https://qiita.com/thun-c/items/058743a25c37c87b8aa4)
+// を参考にしています。thunderさんに多大なる感謝を…
+// Copyright [2021] <Copyright Eita Aoki (Thunder) >
+
 use proconio::input;
 use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
@@ -66,10 +71,6 @@ struct Position {
     i_: usize,
     j_: usize,
 }
-
-// 以下、[世界四連覇AIエンジニアがゼロから教えるゲーム木探索入門]
-// (https://qiita.com/thun-c/items/058743a25c37c87b8aa4)
-// を参考にしています。thunderさんに多大なる感謝を…
 
 #[derive(Clone)]
 /// END_TURN_: 探索を終了するターン<br>
