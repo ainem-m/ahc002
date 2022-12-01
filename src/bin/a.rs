@@ -136,8 +136,8 @@ impl TileState {
 
     /// [どのゲームでも実装する]: 指定したactionでゲームを1ターン進める
     pub fn advance(&mut self, input: &Input, action: Action) {
-        self.pos_.i_ += DIJ[action].0;
-        self.pos_.j_ += DIJ[action].1;
+        self.pos_.i_ = self.pos_.i_.wrapping_add(DIJ[action].0);
+        self.pos_.j_ = self.pos_.j_.wrapping_add(DIJ[action].1);
         self.steps_.push((self.pos_.i_, self.pos_.j_));
         self.game_score_ += input.ps[self.pos_.i_][self.pos_.j_];
         self.seen_[input.tiles[self.pos_.i_][self.pos_.j_]] = true;
@@ -149,8 +149,8 @@ impl TileState {
     pub fn legalActions(&self, input: &Input) -> Actions {
         let mut actions: Actions = vec![];
         for action in 0..4 {
-            let ni = self.pos_.i_ + DIJ[action].0;
-            let nj = self.pos_.j_ + DIJ[action].1;
+            let ni = self.pos_.i_.wrapping_add(DIJ[action].0);
+            let nj = self.pos_.j_.wrapping_add(DIJ[action].1);
             if ni < TILE_SIZE && nj < TILE_SIZE && !self.seen_[input.tiles[ni][nj]] {
                 actions.push(action);
             }
