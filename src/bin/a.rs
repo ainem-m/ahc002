@@ -81,7 +81,7 @@ struct Position {
 /// steps_: 移動経路の座標<br>
 /// game_score_: 得点(実際の得点)<br>
 /// evaluated_score_: 探索上で評価したスコア<br>
-/// first_action_: 探索木のノートルードで最初に選択した行動<br>
+/// first_action_: 探索木のルートノードで最初に選択した行動<br>
 struct TileState {
     END_TURN_: usize,
     turn_: usize,
