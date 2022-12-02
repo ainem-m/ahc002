@@ -90,7 +90,7 @@ class TileState:
         self.steps_: List[Coordinate] = steps if steps else [pos]
         self.output_: Output = output
         self.game_score_ = game_score if game_score else ps[pos[0]][pos[1]]
-        self.evaluated_score_ = self.game_score_
+        self.evaluated_score_ = 0
         self.first_action_ = first_action
 
     def evaluateScore(self) -> None:

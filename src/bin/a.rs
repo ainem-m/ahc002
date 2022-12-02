@@ -111,7 +111,7 @@ impl TileState {
         seen_[input.tiles[pos_.i_][pos_.j_]] = true;
         let steps_ = vec![(pos_.i_, pos_.j_)];
         let game_score_ = input.ps[pos_.i_][pos_.j_];
-        let evaluated_score_ = game_score_;
+        let evaluated_score_ = 0;
         Self {
             END_TURN_: end_turn,
             turn_: 0,
