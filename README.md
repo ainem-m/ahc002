@@ -13,13 +13,13 @@
 記事]()
 
 ## サンプルコード
-12/3(土)15:00公開
+12/2(金)公開
 全て[thunderさんのOnePlayerGame.cpp](https://github.com/thun-c/GameSearch)を参考にしています。
 ありがとうございます。
 
-[Rust](src/bin/a.rs)
-[Python](main.py)
-[Python(型ヒントなし)](no_typing.py)
+[Rust](src/bin/a.rs)  
+[Python](main.py)  
+[Python(型ヒントなし)](no_typing.py)  
 [c++](a.cpp)
 
 ## ローカルテスト編
