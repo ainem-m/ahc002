@@ -37,7 +37,7 @@
 | [r3yohei](https://atcoder.jp/users/r3yohei)           | ぱらぼろ | 1531      | rust python |
 | [hiraku](https://atcoder.jp/users/hiraku)             | hiraku   | 1790      | python rust |
 
-<img src="./team4.jpg" height="100">
+<img src="./team4.png" height="100">
 <strong>Moréchond</strong>
 
 
