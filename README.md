@@ -10,7 +10,7 @@
 ## 実装編
 12/3(土)15:00公開
 [草稿](./implementation.md)
-記事]()
+[記事](https://ainem.hatenablog.com/entry/2022/12/03/151825)
 
 ## サンプルコード
 12/2(金)公開
