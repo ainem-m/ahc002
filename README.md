@@ -1,6 +1,6 @@
 # 第二回AHCをみんなで解く会コンテスト
 
-https://kenkoooo.com/atcoder/#/contest/show/8d4fd023-3f42-4da8-8172-39475bc38ab7
+[バチャ](https://kenkoooo.com/atcoder/#/contest/show/8d4fd023-3f42-4da8-8172-39475bc38ab7)
 
 
 ## チーム表
@@ -13,7 +13,7 @@ https://kenkoooo.com/atcoder/#/contest/show/8d4fd023-3f42-4da8-8172-39475bc38ab7
 ## chrome拡張、ユーザースクリプト
 hirakuさん作成のchrome拡張、ユーザースクリプトです。  
 バチャのランキングの個人名の横に所属チームを追加します。  
-[chrome拡張機能](https://chrome.google.com/webstore/detail/ahcmintokuextention/pnaiacpjkefobopcdiagiibcejgmedbp?hl=ja&authuser=0)（~~順位表の最後の行の人は反映されないバグあり~~ update済）
+[chrome拡張機能](https://chrome.google.com/webstore/detail/ahcmintokuextention/pnaiacpjkefobopcdiagiibcejgmedbp?hl=ja&authuser=0)（~~順位表の最後の行の人は反映されないバグあり~~ update済）  
 [ユーザースクリプト](https://greasyfork.org/ja/scripts/455719-ahc-mintoku-user-script)
 
 ## 問題解説編
