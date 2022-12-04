@@ -1,4 +1,4 @@
-<img src="./team1.png" height="100">
+<img src="./team1.jpg" height="100">
 <strong>三尺秋水</strong>
 
 | ID                                                          | name             | best perf | language |
