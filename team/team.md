@@ -49,7 +49,7 @@
 | [kaede2020](https://atcoder.jp/users/kaede2020)     | kaede2020  | 1529      | cpp      |
 | [kuruton456](https://atcoder.jp/users/kuruton456)   | クルトン   | 1800      | python   |
 
-<img src="./team5.jpg" height="100">
+<img src="./team5.png" height="100">
 <strong>a1nem</strong>
 
 
