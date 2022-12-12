@@ -1,6 +1,6 @@
 import random
 
-random.seed(20210325)  # 本番はこの値を変更します
+random.seed(2022121292044)  # システス準備を始めた時刻
 
 for _ in range(1000):
     print(random.randint(0, 10000000000))

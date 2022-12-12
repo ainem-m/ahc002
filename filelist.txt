@@ -1,0 +1,6 @@
+team1.cr Crystal team1
+team2 Rust team2
+team3 Rust team3
+team4.py Python team4
+team5.cpp C++ team5
+team6.cpp C++ team6
