@@ -1,0 +1,2 @@
+annealing: 14279 iterations
+59522 1113

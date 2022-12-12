@@ -1,0 +1,2 @@
+annealing: 14767 iterations
+63026 1141

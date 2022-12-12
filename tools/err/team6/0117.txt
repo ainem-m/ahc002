@@ -1,0 +1,2 @@
+annealing: 15566 iterations
+61722 1173

@@ -1,0 +1,2 @@
+annealing: 15085 iterations
+60662 1149

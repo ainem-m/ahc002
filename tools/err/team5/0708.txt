@@ -1,0 +1,5 @@
+Executed in non-development mode.
+Currently best internal score: 42698
+Currently best internal score: 42698
+Annealing: Loops: 465000
+Currently best internal score: 62807

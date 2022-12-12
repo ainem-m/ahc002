@@ -1,7 +1,11 @@
 import subprocess
 
 NUM_OF_TEAMS = 6
-NUM_OF_CASES = 2
+NUM_OF_CASES = 1000
+# パソコンのプロセス数
+max_process = 8  # 要変更
+proc_list = []
+
 IN = "tools/in/"
 OUT = "tools/out/"
 ERR = "tools/err/"
@@ -37,7 +41,7 @@ for team_num in range(NUM_OF_TEAMS):
     subprocess.run(f"mkdir {OUT}{team}", shell=True)
     subprocess.run(f"rm -rf {ERR}{team}", shell=True)
     subprocess.run(f"mkdir {ERR}{team}", shell=True)
-
+    """
     # システムテスト実行
     for i in range(NUM_OF_CASES):
         subprocess.run(
@@ -46,6 +50,22 @@ for team_num in range(NUM_OF_TEAMS):
         )
         print(f"\rrunning {i:04d}", end="")
     print()
+    """
+    # システムテスト実行
+    for i in range(NUM_OF_CASES):
+        proc = subprocess.Popen(
+            f"{command} <{IN}{i:04d}.txt >{OUT}{team}/{i:04d}.txt 2>{ERR}{team}/{i:04d}.txt",
+            shell=True,
+        )
+        proc_list.append(proc)
+        print(f"\rrunning {i:04d}", end="")
+        if (i + 1) % max_process == 0 or (i + 1) == NUM_OF_CASES:
+            for subproc in proc_list:
+                subproc.wait()
+                # time.sleep(0.1)
+        proc_list = []
+    print()
+
     sum_score = 0
 
     # 出力からビジュアライザを用いて得点計算
