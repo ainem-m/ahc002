@@ -1,6 +1,6 @@
 # 第二回AHCをみんなで解く会コンテスト
 
-[バチャ](https://kenkoooo.com/atcoder/#/contest/show/8d4fd023-3f42-4da8-8172-39475bc38ab7)
+[バチャはこちらから](https://kenkoooo.com/atcoder/#/contest/show/8d4fd023-3f42-4da8-8172-39475bc38ab7)
 
 
 ## チーム表
@@ -36,3 +36,6 @@ hirakuさん作成のchrome拡張、ユーザースクリプトです。
 
 ## ローカルテスト編
 書くの、難しい…
+
+## アンケート結果
+[こちら](/enquete/enquete.md)
